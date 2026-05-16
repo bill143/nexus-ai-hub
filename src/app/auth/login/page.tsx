@@ -1,4 +1,6 @@
-'use client'
+﻿'use client'
+
+export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -106,7 +108,7 @@ export default function LoginPage() {
               <input
                 type="password" autoComplete="current-password" required
                 value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 style={inp}
                 onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent)')}
                 onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-default)')}
@@ -124,7 +126,7 @@ export default function LoginPage() {
                 fontFamily: 'var(--font-sans)', marginTop: 4, transition: 'background 0.15s',
               }}
             >
-              {loading ? 'Signing in…' : 'Sign In'}
+              {loading ? 'Signing inâ€¦' : 'Sign In'}
             </button>
           </form>
 

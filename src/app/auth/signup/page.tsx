@@ -1,4 +1,6 @@
-'use client'
+﻿'use client'
+
+export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -59,7 +61,7 @@ export default function SignupPage() {
             Click the link to activate your account.
           </div>
           <Link href="/auth/login" style={{ display: 'inline-block', marginTop: 24, color: 'var(--accent2)', fontSize: 13, textDecoration: 'none' }}>
-            ← Back to sign in
+            â† Back to sign in
           </Link>
         </div>
       </div>
@@ -115,7 +117,7 @@ export default function SignupPage() {
                 fontFamily: 'var(--font-sans)', marginTop: 4,
               }}
             >
-              {loading ? 'Creating account…' : 'Create Account'}
+              {loading ? 'Creating accountâ€¦' : 'Create Account'}
             </button>
           </form>
 
