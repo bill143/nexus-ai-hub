@@ -42,7 +42,7 @@ export default async function SettingsPage() {
           session={session}
           members={(members ?? []) as Partial<Profile>[]}
           invites={(invites ?? []) as Partial<OrgInvite>[]}
-          auditLogs={(auditLogs ?? []) as Partial<AuditLog>[]}
+          auditLogs={(auditLogs ?? []) as unknown as Partial<AuditLog>[]}
         />
       </div>
     </DashboardShell>
