@@ -1,10 +1,12 @@
-﻿import { Suspense } from 'react'
-import SignupForm from './SignupForm'
+﻿@"
+import { Suspense } from 'react'
+import LoginForm from './LoginForm'
 
-export default function SignupPage() {
+export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: 12, letterSpacing: '0.1em' }}>LOADING...</div>}>
-      <SignupForm />
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginForm />
     </Suspense>
   )
 }
+"@ | Set-Content "src\app\auth\login\page.tsx" -Encoding UTF8
