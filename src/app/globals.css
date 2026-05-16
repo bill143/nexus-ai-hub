@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   NEXUS AI Hub — Design Tokens
+   All colors as CSS custom properties
+   ============================================================ */
+:root {
+  --bg-base: #070A12;
+  --bg-surface: #0D1117;
+  --bg-elevated: #131923;
+  --bg-hover: #1A2332;
+
+  --border-subtle: #141B27;
+  --border-default: #1E2A3A;
+  --border-strong: #2D3F55;
+
+  --text-primary: #E8EDF5;
+  --text-secondary: #7A8FA6;
+  --text-muted: #3D5066;
+
+  --accent: #2F80ED;
+  --accent-glow: rgba(47, 128, 237, 0.15);
+  --accent2: #56CFE1;
+
+  --gold: #D4A843;
+  --green: #0FB872;
+  --red: #E53E3E;
+  --amber: #F6AD55;
+  --purple: #9F7AEA;
+
+  --sidebar-w: 220px;
+  --header-h: 56px;
+}
+
+/* ============================================================
+   BASE RESET
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans, 'DM Sans', sans-serif);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   NOISE + SCANLINE TEXTURE
+   ============================================================ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.12) 2px,
+      rgba(0, 0, 0, 0.12) 4px
+    );
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+.font-bebas  { font-family: var(--font-bebas, 'Bebas Neue', cursive); }
+.font-mono   { font-family: var(--font-mono, 'JetBrains Mono', monospace); }
+.font-sans   { font-family: var(--font-sans, 'DM Sans', sans-serif); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes accentSlide {
+  to { width: 60%; }
+}
+
+@keyframes rowIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
