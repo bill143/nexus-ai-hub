@@ -1,7 +1,8 @@
-import { requireAuth } from '@/lib/auth'
+﻿import { requireAuth } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 import { SettingsTabs } from '@/components/settings/SettingsTabs'
+import type { Profile, OrgInvite, AuditLog } from '@/types/database'
 
 export default async function SettingsPage() {
   const session = await requireAuth()
@@ -14,7 +15,6 @@ export default async function SettingsPage() {
       .eq('org_id', session.org?.id ?? '')
       .order('created_at', { ascending: true }),
 
-    // Only visible to admin
     session.profile.role === 'admin'
       ? supabase
           .from('org_invites')
@@ -40,9 +40,9 @@ export default async function SettingsPage() {
       <div className="p-6">
         <SettingsTabs
           session={session}
-          members={members ?? []}
-          invites={invites ?? []}
-          auditLogs={auditLogs ?? []}
+          members={(members ?? []) as Partial<Profile>[]}
+          invites={(invites ?? []) as Partial<OrgInvite>[]}
+          auditLogs={(auditLogs ?? []) as Partial<AuditLog>[]}
         />
       </div>
     </DashboardShell>
