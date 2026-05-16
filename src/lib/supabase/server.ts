@@ -1,7 +1,7 @@
-import { createServerClient } from '@supabase/ssr'
+﻿import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-// Server-side Supabase client — uses service role for admin ops
+// Server-side Supabase client â€” uses service role for admin ops
 // or anon key for user-scoped ops (RLS enforced)
 export function createClient() {
   const cookieStore = cookies()
@@ -14,13 +14,13 @@ export function createClient() {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
           } catch {
-            // setAll called from Server Component — safe to ignore
+            // setAll called from Server Component â€” safe to ignore
           }
         },
       },
@@ -28,7 +28,7 @@ export function createClient() {
   )
 }
 
-// Admin client using service role key — bypasses RLS
+// Admin client using service role key â€” bypasses RLS
 // ONLY use server-side for trusted operations (audit log writes, etc.)
 export function createAdminClient() {
   return createServerClient(
