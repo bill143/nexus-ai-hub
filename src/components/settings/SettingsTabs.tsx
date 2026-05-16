@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import type { SessionUser, Profile, OrgInvite, AuditLog, UserRole } from '@/types/database'
@@ -112,7 +112,7 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
             key={tab}
             onClick={() => setActiveTab(tab)}
             style={{
-              padding: '7px 16px', border: 'none', cursor: 'pointer',
+              padding: '7px 16px', cursor: 'pointer',
               background: activeTab === tab ? 'var(--bg-elevated)' : 'transparent',
               color: activeTab === tab ? 'var(--text-primary)' : 'var(--text-muted)',
               fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.06em',
@@ -260,7 +260,7 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
                       fontFamily: 'var(--font-sans)',
                     }}
                   >
-                    {inviting ? 'Sending…' : 'Send Invite'}
+                    {inviting ? 'Sendingâ€¦' : 'Send Invite'}
                   </button>
                 </div>
               </div>
@@ -332,7 +332,7 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
                       )}
                     </td>
                     <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)' }}>
-                      {m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}
+                      {m.created_at ? new Date(m.created_at).toLocaleDateString() : 'â€”'}
                     </td>
                     {isAdmin && (
                       <td style={{ padding: '10px 12px' }}>
@@ -368,7 +368,7 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
                     <div>
                       <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{inv.email}</div>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {inv.role?.toUpperCase()} · Expires {inv.expires_at ? new Date(inv.expires_at).toLocaleDateString() : '—'}
+                        {inv.role?.toUpperCase()} Â· Expires {inv.expires_at ? new Date(inv.expires_at).toLocaleDateString() : 'â€”'}
                       </div>
                     </div>
                     <span style={{ fontSize: 10, color: 'var(--amber)', fontFamily: 'var(--font-mono)' }}>PENDING</span>
@@ -380,11 +380,11 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
         </div>
       )}
 
-      {/* Audit Log tab — admin only */}
+      {/* Audit Log tab â€” admin only */}
       {activeTab === 'Audit Log' && isAdmin && (
         <div>
           <div style={sectionLabel}>
-            Audit Log — Last 50 Events
+            Audit Log â€” Last 50 Events
             <div style={{ flex: 1, height: 1, background: 'var(--border-subtle)' }} />
           </div>
           <div style={cardStyle}>
@@ -420,7 +420,7 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
                       {(log.user as any)?.full_name ?? 'System'}
                     </td>
                     <td style={{ padding: '9px 12px', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-muted)' }}>
-                      {log.created_at ? new Date(log.created_at).toLocaleString() : '—'}
+                      {log.created_at ? new Date(log.created_at).toLocaleString() : 'â€”'}
                     </td>
                   </tr>
                 ))}
@@ -446,7 +446,7 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
           color: 'var(--text-primary)', animation: 'toastIn 0.25s ease',
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)', minWidth: 200,
         }}>
-          ✓ {toast}
+          âœ“ {toast}
         </div>
       )}
     </div>
