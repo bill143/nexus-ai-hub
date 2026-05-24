@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
   // Redirect authenticated users away from auth pages
   if (user && isPublicRoute && pathname !== '/auth/callback') {
     const dashboardUrl = request.nextUrl.clone()
-    dashboardUrl.pathname = '/dashboard'
+    dashboardUrl.pathname = '/hub'
     return NextResponse.redirect(dashboardUrl)
   }
 

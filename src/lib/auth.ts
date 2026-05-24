@@ -53,7 +53,7 @@ export async function requireRole(
   const requiredLevel = roleHierarchy[minRole]
 
   if (userLevel < requiredLevel) {
-    redirect('/dashboard')
+    redirect('/hub')
   }
 
   return sessionUser

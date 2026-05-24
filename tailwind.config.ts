@@ -10,8 +10,29 @@ const config: Config = {
     extend: {
       fontFamily: {
         bebas: ['var(--font-bebas)', 'Bebas Neue', 'cursive'],
+        display: ['var(--font-bebas)', 'Bebas Neue', 'cursive'],
         mono: ['var(--font-mono)', 'JetBrains Mono', 'monospace'],
         sans: ['var(--font-sans)', 'DM Sans', 'sans-serif'],
+      },
+      textColor: {
+        primary: 'var(--text-primary)',
+        secondary: 'var(--text-secondary)',
+        muted: 'var(--text-muted)',
+      },
+      backgroundColor: {
+        glass: 'rgba(13, 17, 23, 0.65)',
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
+      keyframes: {
+        jarvisPulse: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.5' },
+        },
+      },
+      animation: {
+        'jarvis-pulse': 'jarvisPulse 2s ease-in-out infinite',
       },
       colors: {
         base: '#070A12',
