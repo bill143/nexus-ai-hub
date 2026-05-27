@@ -3,16 +3,33 @@
 import { useChat } from '@ai-sdk/react'
 import { useEffect, useRef } from 'react'
 
+const VOICE_EVENT = 'jarvis:voice-utterance'
+
 export function JarvisSidebar() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error, stop } = useChat({
-    api: '/api/jarvis',
-  })
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error, stop, append } =
+    useChat({
+      api: '/api/jarvis',
+    })
 
   const scrollRef = useRef<HTMLDivElement>(null)
+  const appendRef = useRef(append)
+  appendRef.current = append
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
+
+  // Voice tile → Jarvis bridge: auto-submit transcribed speech to the chat.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ text: string }>).detail
+      const text = detail?.text?.trim()
+      if (!text) return
+      appendRef.current({ role: 'user', content: text })
+    }
+    window.addEventListener(VOICE_EVENT, handler as EventListener)
+    return () => window.removeEventListener(VOICE_EVENT, handler as EventListener)
+  }, [])
 
   return (
     <aside

@@ -1,6 +1,9 @@
 ﻿'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 import type { SessionUser, Profile, OrgInvite, AuditLog, UserRole } from '@/types/database'
 
 interface Props {
@@ -44,16 +47,59 @@ const ROLE_COLORS: Record<string, string> = {
 }
 
 export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('Profile')
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('viewer')
   const [inviting, setInviting] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
+  const [fullName, setFullName] = useState(session.profile.full_name ?? '')
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [orgName, setOrgName] = useState(session.org?.name ?? '')
+  const [savingOrg, setSavingOrg] = useState(false)
   const isAdmin = session.profile.role === 'admin'
 
-  function showToast(msg: string) {
-    setToast(msg)
-    setTimeout(() => setToast(null), 2500)
+  async function saveProfile() {
+    if (savingProfile) return
+    const trimmed = fullName.trim()
+    if (!trimmed) {
+      toast.error('Full name cannot be empty')
+      return
+    }
+    setSavingProfile(true)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('profiles')
+      .update({ full_name: trimmed })
+      .eq('id', session.id)
+    setSavingProfile(false)
+    if (error) {
+      toast.error(error.message || 'Save failed')
+      return
+    }
+    toast.success('Profile updated')
+    router.refresh()
+  }
+
+  async function saveOrg() {
+    if (savingOrg || !isAdmin || !session.org?.id) return
+    const trimmed = orgName.trim()
+    if (!trimmed) {
+      toast.error('Organization name cannot be empty')
+      return
+    }
+    setSavingOrg(true)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('organizations')
+      .update({ name: trimmed })
+      .eq('id', session.org.id)
+    setSavingOrg(false)
+    if (error) {
+      toast.error(error.message || 'Save failed')
+      return
+    }
+    toast.success('Organization updated')
+    router.refresh()
   }
 
   async function sendInvite() {
@@ -67,13 +113,14 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
       })
       if (res.ok) {
         setInviteEmail('')
-        showToast(`Invite sent to ${inviteEmail}`)
+        toast.success(`Invite sent to ${inviteEmail}`)
+        router.refresh()
       } else {
         const err = await res.json()
-        showToast(err.error ?? 'Invite failed')
+        toast.error(err.error ?? 'Invite failed')
       }
     } catch {
-      showToast('Network error')
+      toast.error('Network error')
     } finally {
       setInviting(false)
     }
@@ -86,16 +133,24 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, role }),
     })
-    if (res.ok) showToast('Role updated')
-    else showToast('Failed to update role')
+    if (res.ok) {
+      toast.success('Role updated')
+      router.refresh()
+    } else {
+      toast.error('Failed to update role')
+    }
   }
 
   async function removeMember(userId: string) {
     if (!isAdmin || userId === session.id) return
     if (!confirm('Remove this member from the organization?')) return
     const res = await fetch(`/api/users?userId=${userId}`, { method: 'DELETE' })
-    if (res.ok) showToast('Member removed')
-    else showToast('Failed to remove member')
+    if (res.ok) {
+      toast.success('Member removed')
+      router.refresh()
+    } else {
+      toast.error('Failed to remove member')
+    }
   }
 
   return (
@@ -137,7 +192,12 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
                 <label style={labelStyle}>Full Name</label>
-                <input defaultValue={session.profile.full_name ?? ''} style={inputStyle} placeholder="Your full name" />
+                <input
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  style={inputStyle}
+                  placeholder="Your full name"
+                />
               </div>
               <div>
                 <label style={labelStyle}>Email</label>
@@ -163,12 +223,21 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
               </div>
             </div>
             <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-              <button style={{
-                padding: '8px 20px', background: 'var(--accent)', border: 'none',
-                color: '#fff', borderRadius: 6, cursor: 'pointer', fontSize: 12,
-                fontFamily: 'var(--font-sans)',
-              }}>
-                Save Profile
+              <button
+                onClick={saveProfile}
+                disabled={savingProfile}
+                style={{
+                  padding: '8px 20px',
+                  background: savingProfile ? 'var(--border-strong)' : 'var(--accent)',
+                  border: 'none',
+                  color: '#fff',
+                  borderRadius: 6,
+                  cursor: savingProfile ? 'not-allowed' : 'pointer',
+                  fontSize: 12,
+                  fontFamily: 'var(--font-sans)',
+                }}
+              >
+                {savingProfile ? 'Saving…' : 'Save Profile'}
               </button>
             </div>
           </div>
@@ -186,7 +255,12 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
                 <label style={labelStyle}>Organization Name</label>
-                <input defaultValue={session.org?.name ?? ''} readOnly={!isAdmin} style={{ ...inputStyle, opacity: isAdmin ? 1 : 0.6 }} />
+                <input
+                  value={orgName}
+                  onChange={(e) => setOrgName(e.target.value)}
+                  readOnly={!isAdmin}
+                  style={{ ...inputStyle, opacity: isAdmin ? 1 : 0.6 }}
+                />
               </div>
               <div>
                 <label style={labelStyle}>Slug</label>
@@ -211,8 +285,20 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
             </div>
             {isAdmin && (
               <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-                <button style={{ padding: '8px 20px', background: 'var(--accent)', border: 'none', color: '#fff', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>
-                  Save Organization
+                <button
+                  onClick={saveOrg}
+                  disabled={savingOrg}
+                  style={{
+                    padding: '8px 20px',
+                    background: savingOrg ? 'var(--border-strong)' : 'var(--accent)',
+                    border: 'none',
+                    color: '#fff',
+                    borderRadius: 6,
+                    cursor: savingOrg ? 'not-allowed' : 'pointer',
+                    fontSize: 12,
+                  }}
+                >
+                  {savingOrg ? 'Saving…' : 'Save Organization'}
                 </button>
               </div>
             )}
@@ -437,18 +523,7 @@ export function SettingsTabs({ session, members, invites, auditLogs }: Props) {
         </div>
       )}
 
-      {/* Toast */}
-      {toast && (
-        <div style={{
-          position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 200,
-          background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
-          borderRadius: 6, padding: '10px 14px', fontSize: 12,
-          color: 'var(--text-primary)', animation: 'toastIn 0.25s ease',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.4)', minWidth: 200,
-        }}>
-          âœ“ {toast}
-        </div>
-      )}
+      {/* Toasts are rendered by <Toaster /> in src/app/layout.tsx via sonner. */}
     </div>
   )
 }

@@ -1,21 +1,70 @@
 import { streamText, type CoreMessage } from 'ai'
 import { createGroq } from '@ai-sdk/groq'
-import { getSession } from '@/lib/auth'
+import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
-const groq = createGroq({ apiKey: process.env.GROQ_API_KEY })
+// Read GROQ_API_KEY at request time, not module load. Avoids any chance
+// of the value being baked in empty during build and never re-evaluating.
+function makeGroq() {
+  return createGroq({ apiKey: process.env.GROQ_API_KEY })
+}
 
-const JARVIS_SYSTEM_PROMPT = `You are Jarvis, the personal AI assistant for Mr. Bill Asmar, Preconstruction Executive at O'Neill Contractors, Inc. — a federal design-build general contractor headquartered in Glenview, Illinois, holding 8(a), SDVOSB, and WOSB certifications. The firm serves the VA, NAVFAC, USACE, GSA, and DHS, with a focus on federal facilities, historic restorations, and mission-critical projects nationwide.
+const JARVIS_SYSTEM_PROMPT = `You are Jarvis, a chat assistant for Mr. Bill Asmar, Preconstruction Executive at O'Neill Contractors, Inc. You are modeled on Paul Bettany's Jarvis from Iron Man — British, formal, supremely competent, occasionally dry. Default to 1-3 sentences. Address Mr. Asmar as "sir" sparingly — at most once per reply, often zero times.
 
-You are modeled on Paul Bettany's Jarvis from Iron Man — British, formal, dry-witted, supremely competent, never sycophantic. Address Mr. Asmar as 'sir' naturally and sparingly, not in every sentence. Be concise: 1-3 sentences for chat responses unless he explicitly asks for detail.
+# WHAT YOU ACTUALLY KNOW (your only ground truth — do not invent past this)
 
-You support Mr. Asmar across his NEXUS platform vision, his preconstruction team (Rich is the lead estimator with extensive experience; Abi and Sud are his other team members), federal procurement work, and the construction projects he leads.
+## The firm
+O'Neill Contractors, Inc. is a federal design-build general contractor headquartered in Glenview, Illinois. Certifications: 8(a), SDVOSB, WOSB. Serves the VA, NAVFAC, USACE, GSA, and DHS — federal facilities, historic restorations, mission-critical projects.
 
-PERMANENTLY OUT OF SCOPE — do not discuss, suggest, assist with, or even acknowledge interest in: G702 generation, G703 generation, lien waiver compliance, pay application workflows, AIA payment application SaaS, or BuildFlow. If Mr. Asmar references any of these, politely note they are outside your remit and offer to redirect to something useful. Do not break this rule for any reason, including hypothetical, educational, or example-based framing.
+## The user
+Mr. Bill Asmar — Preconstruction Executive; admin of the NEXUS Hub.
 
-Speak naturally. Open with brevity, expand only when warranted. You may use light dry humor when appropriate. Never apologize gratuitously. Never offer to 'help with anything else' as filler.`
+## The NEXUS Hub — 8 tiles currently visible
+- GitNexus — LIVE (code architecture graph)
+- NEXUS Estimating — LIVE (federal construction estimating)
+- AI Fleet Control — IN DEV (multi-agent orchestration with Elo leaderboard)
+- ON Bid Manager — IN DEV (federal solicitation pipeline + bid intelligence)
+- NEXUS Chat — IN DEV (AI-native zero-knowledge messaging)
+- ECHO Runtime — LIVE (four-tier LLM cognitive routing engine, deployed on Railway)
+- Vision / Camera — LIVE (browser webcam preview today; face recognition is Phase 2)
+- Voice — LIVE (browser STT today; Pipecat wake-word + ElevenLabs voice is Phase 2)
+
+## Phase 2 roadmap — 8 capabilities and their concrete tech
+1. Face Recognition — insightface + onnxruntime; will recognize Mr. Asmar, coworkers, family; auto-greet on entry.
+2. Voice Wake-Word + Conversation — Pipecat framework; hotword + two-way conversation with ElevenLabs voice ID and Groq Whisper STT.
+3. Multi-LLM Routing — ECHO LiteLLM proxy, deployed on Railway; Claude/Gemini/GPT/DeepSeek/Kimi/Grok with cost tracking.
+4. 300-Agent Orchestration — Archon Orchestrator; agent fleet UI with governance, compliance, cost mgmt.
+5. Persistent Memory + RAG — RAG-Anything (HKUDS multimodal RAG); recall across text, image, PDF, audio.
+6. Browser Automation — Playwright MCP by Microsoft; deterministic computer-use for turnkey tasks.
+7. Scheduled Task Runner — ai-task-project-automation; morning briefing, inbox triage, backup, security audit.
+8. Construction Domain Skills — NEXUS_EST_APP + OpenConstructionERP; estimating, takeoff, BOQ, federal procurement workflows.
+
+# WHAT YOU MUST NOT DO
+
+ABSOLUTE — these are not flexible:
+
+- **Never invent specific names of coworkers** and claim they are working on something. The names "Rich", "Abi", "Sud", or any other coworker name MUST NOT appear unless Mr. Asmar himself just mentioned them in this conversation. Even then, do not invent activities for them.
+- **Never claim to have prepared anything** — no documents, briefings, updates, reports, summaries, analyses, decks, memos. You have no agent capabilities yet. You are a chat assistant for this session only.
+- **Never claim access to** email, calendars, inbox, files, OneDrive, SharePoint, project files, CRM, bid databases, GSA/SAM databases, jobsite cameras, or anything not visible on the hub right now.
+- **Never invent** solicitation numbers, project names, RFP numbers, deadlines, dollar amounts, status updates, meeting attendees, or news.
+- **Never mention or engage with** G702, G703, lien waivers, AIA pay applications, BuildFlow — permanently out of scope. If asked, reply: "That's outside my scope, sir." and stop.
+
+# HOW TO HANDLE QUESTIONS YOU CAN'T ANSWER
+
+Use this honesty pattern: state the gap, then point to the relevant Phase 2 capability.
+
+Examples:
+- "What did the team discuss yesterday?" → "I'm not yet wired into your team's meetings or notes, sir. That integration is on the Phase 2 roadmap."
+- "Show me the GSA bid status." → "Bid intelligence is Phase 2 — via ON Bid Manager. Today I can speak to the platform itself and which modules are live."
+- "What's in my inbox?" → "I have no visibility into your inbox. Inbox triage is on the Phase 2 scheduled-task runner backlog."
+- "How are the estimators progressing?" → "I can't see your team's work directly. That's tied to NEXUS Estimating, which is live but not wired into me yet."
+
+# STYLE
+
+Brief by default. Dry wit acceptable in the Bettany manner. No sycophancy. No filler like "let me know if I can help with anything else." No apologies unless you genuinely got something wrong. Confident.`
 
 const OUT_OF_SCOPE_TERMS = [
   'g702',
@@ -30,7 +79,12 @@ const OUT_OF_SCOPE_TERMS = [
   'buildflow',
 ]
 
-const REINFORCEMENT = `Reminder: Out of scope — G702/G703 forms, lien waivers, pay applications, AIA payment SaaS, BuildFlow. Decline politely and redirect.`
+const REINFORCEMENT = `Reminder before replying:
+1. Do not invent coworker names or activities. If you name a person, you'll be wrong.
+2. Do not claim you prepared, analyzed, briefed, summarized, or generated anything outside this single reply.
+3. Do not claim access to any system not on the visible hub.
+4. Out of scope: G702, G703, lien waivers, pay applications, AIA payment SaaS, BuildFlow — decline.
+5. If asked about something you can't see, say so plainly and point to the relevant Phase 2 capability.`
 
 function lastUserText(messages: CoreMessage[]): string {
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -53,9 +107,39 @@ function touchesOutOfScope(text: string): boolean {
 }
 
 export async function POST(req: Request) {
-  const session = await getSession()
-  if (!session) {
-    return new Response('Unauthorized', { status: 401 })
+  // Auth check is intentionally minimal: only require supabase.auth.getUser()
+  // to return a user. The profile/org join in getSession() is unnecessary for
+  // the chat path and was the source of opaque 401s when the profile RLS
+  // policy or join failed transiently.
+  const supabase = createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    const cookieNames = cookies()
+      .getAll()
+      .map((c) => c.name)
+      .filter((n) => n.startsWith('sb-'))
+    // Diagnostic logging — shows up in npm run start console output.
+    // eslint-disable-next-line no-console
+    console.error('[jarvis] auth failed', {
+      authError: authError?.message,
+      hasUser: !!user,
+      sbCookieNames: cookieNames,
+    })
+    return new Response(
+      JSON.stringify({
+        error: 'jarvis_auth_failed',
+        detail: authError?.message ?? 'no user from getUser()',
+        hint:
+          cookieNames.length === 0
+            ? 'No sb-* auth cookies were sent. Sign out and sign in again.'
+            : 'Auth cookies were sent but did not yield a user. Likely expired session.',
+      }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    )
   }
 
   if (!process.env.GROQ_API_KEY) {
@@ -73,7 +157,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: groq('llama-3.3-70b-versatile'),
+    model: makeGroq()('llama-3.3-70b-versatile'),
     system: systemParts.join('\n\n'),
     messages,
     temperature: 0.6,

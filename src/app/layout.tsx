@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Bebas_Neue, JetBrains_Mono, DM_Sans } from 'next/font/google'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 const bebasNeue = Bebas_Neue({
@@ -36,6 +37,7 @@ export default function RootLayout({
     <html lang="en" className={`${bebasNeue.variable} ${jetbrainsMono.variable} ${dmSans.variable}`}>
       <body className="bg-base text-primary antialiased">
         {children}
+        <Toaster position="bottom-right" theme="dark" richColors closeButton />
       </body>
     </html>
   )

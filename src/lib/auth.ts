@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { SessionUser } from '@/types/database'
 
@@ -13,14 +13,39 @@ export async function requireAuth(): Promise<SessionUser> {
     redirect('/auth/login')
   }
 
-  const { data: profile, error: profileError } = await supabase
+  let { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
+  // Self-heal: if the auth.users → profiles trigger didn't fire (or RLS
+  // hides the row), insert it ourselves with the admin client. This kills
+  // the middleware ↔ requireAuth redirect loop at the source: never again
+  // can a half-authed state (session valid, profile missing) bounce the
+  // user between /hub and /auth/login.
   if (profileError || !profile) {
-    redirect('/auth/login')
+    const admin = createAdminClient()
+    const fullName =
+      (user.user_metadata as Record<string, unknown> | null)?.full_name as string | undefined
+    const avatarUrl =
+      (user.user_metadata as Record<string, unknown> | null)?.avatar_url as string | undefined
+    const { data: created } = await admin
+      .from('profiles')
+      .upsert(
+        {
+          id: user.id,
+          full_name: fullName ?? user.email ?? 'New User',
+          avatar_url: avatarUrl ?? null,
+        },
+        { onConflict: 'id' },
+      )
+      .select('*')
+      .single()
+    profile = created
+    if (!profile) {
+      redirect('/auth/login')
+    }
   }
 
   let org = null

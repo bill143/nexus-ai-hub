@@ -1,3 +1,5 @@
+'use client'
+
 import {
   Network,
   Calculator,
@@ -5,11 +7,12 @@ import {
   Briefcase,
   MessageSquare,
   Cpu,
-  TrendingUp,
-  FileSearch,
   ExternalLink,
   type LucideIcon,
 } from 'lucide-react'
+import { CameraTile } from './CameraTile'
+import { VoiceTile } from './VoiceTile'
+import { RoadmapPanel } from './RoadmapPanel'
 
 type TileStatus = 'LIVE' | 'IN DEV' | 'PHASE 3'
 
@@ -63,27 +66,10 @@ const TILES: Tile[] = [
   },
   {
     name: 'ECHO Runtime',
-    status: 'IN DEV',
-    url: null,
+    status: 'LIVE',
+    url: 'https://echo-litellm.up.railway.app',
     description: 'Four-tier LLM cognitive routing engine',
     Icon: Cpu,
-    tooltip: 'Coming in Phase 2',
-  },
-  {
-    name: 'Trading Console',
-    status: 'IN DEV',
-    url: null,
-    description: 'ORB strategy automation + risk monitoring',
-    Icon: TrendingUp,
-    tooltip: 'Coming in Phase 2',
-  },
-  {
-    name: 'Documents',
-    status: 'PHASE 3',
-    url: null,
-    description: 'Unified OneDrive + Drive search via Jarvis',
-    Icon: FileSearch,
-    tooltip: 'Planned for Phase 3 (document intelligence)',
   },
 ]
 
@@ -106,39 +92,49 @@ const STATUS_STYLE: Record<TileStatus, { color: string; bg: string; border: stri
 }
 
 export function TileGrid() {
+  const liveCount = TILES.filter((t) => t.status === 'LIVE').length + 2 // + Camera + Voice
   return (
-    <div className="p-6 md:p-8">
-      <header className="mb-6">
-        <h1
-          className="font-display tracking-[0.08em] text-3xl"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          NEXUS <span style={{ color: 'var(--accent2)' }}>HUB</span>
-        </h1>
-        <p
-          className="font-mono uppercase mt-1"
-          style={{
-            fontSize: 10,
-            letterSpacing: '0.18em',
-            color: 'var(--text-muted)',
-          }}
-        >
-          Command Surface · 8 Modules · 2 Live
-        </p>
-      </header>
+    <>
+      <div className="p-6 md:p-8">
+        <header className="mb-6">
+          <h1
+            className="font-display tracking-[0.08em] text-3xl"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            NEXUS <span style={{ color: 'var(--accent2)' }}>HUB</span>
+          </h1>
+          <p
+            className="font-mono uppercase mt-1"
+            style={{
+              fontSize: 10,
+              letterSpacing: '0.18em',
+              color: 'var(--text-muted)',
+            }}
+          >
+            Command Surface · 8 Modules · {liveCount} Live
+          </p>
+        </header>
 
-      <ul className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        {TILES.map((tile) => {
-          const isLive = tile.status === 'LIVE'
-          const style = STATUS_STYLE[tile.status]
-          return (
-            <li key={tile.name}>
-              <Tile tile={tile} statusStyle={style} isLive={isLive} />
-            </li>
-          )
-        })}
-      </ul>
-    </div>
+        <ul className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+          {TILES.map((tile) => {
+            const isLive = tile.status === 'LIVE'
+            const style = STATUS_STYLE[tile.status]
+            return (
+              <li key={tile.name}>
+                <Tile tile={tile} statusStyle={style} isLive={isLive} />
+              </li>
+            )
+          })}
+          <li>
+            <CameraTile />
+          </li>
+          <li>
+            <VoiceTile />
+          </li>
+        </ul>
+      </div>
+      <RoadmapPanel />
+    </>
   )
 }
 
@@ -162,7 +158,6 @@ function Tile({
         minHeight: 200,
       }}
     >
-      {/* Subtle accent at top, brighter for LIVE */}
       <div
         style={{
           position: 'absolute',
